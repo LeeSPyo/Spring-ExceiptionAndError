@@ -1,8 +1,15 @@
 package hello.exception.servlet;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Controller
 public class ErrorPageController {
-	//RequestDispatcher 상수로 정의되어 있음
+	// RequestDispatcher 상수로 정의되어 있음
 	public static final String ERROR_EXCEPTION = "jakarta.servlet.error.exception";
 	public static final String ERROR_EXCEPTION_TYPE = "jakarta.servlet.error.exception_type";
 	public static final String ERROR_MESSAGE = "jakarta.servlet.error.message";
@@ -32,11 +39,28 @@ public class ErrorPageController {
 		return "error-page/500";
 	}
 
-	private void printErrorInfo(HttpServletRequest request) {
+	@RequestMapping(value = "/error-page/500", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Map<String, Object>> errorPage500Api(HttpServletRequest request,
+			HttpServletResponse response) {
 		
+		log.info("API errorPage 500");
+		
+		Map<String, Object> result = new HashMap<>();
+		Exception ex = (Exception) request.getAttribute(ERROR_EXCEPTION);
+		result.put("status", request.getAttribute(ERROR_STATUS_CODE));
+		result.put("message", ex.getMessage());
+		
+		Integer statusCode = (Integer) request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
+		
+		return new ResponseEntity(result, HttpStatus.valueOf(statusCode));
+	}
+
+	private void printErrorInfo(HttpServletRequest request) {
+
 		log.info("ERROR_EXCEPTION: {}", request.getAttribute(ERROR_EXCEPTION));
 		log.info("ERROR_EXCEPTION_TYPE: {}", request.getAttribute(ERROR_EXCEPTION_TYPE));
-		log.info("ERROR_MESSAGE: {}", request.getAttribute(ERROR_MESSAGE)); // ex의 경우 NestedServletException 스프링이 한번 감싸서 반환
+		log.info("ERROR_MESSAGE: {}", request.getAttribute(ERROR_MESSAGE)); // ex의 경우 NestedServletException 스프링이 한번 감싸서
+																			// 반환
 		log.info("ERROR_REQUEST_URI: {}", request.getAttribute(ERROR_REQUEST_URI));
 		log.info("ERROR_SERVLET_NAME: {}", request.getAttribute(ERROR_SERVLET_NAME));
 		log.info("ERROR_STATUS_CODE: {}", request.getAttribute(ERROR_STATUS_CODE));
